@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block breadcrumb %}Overview{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-4 animate-fade-in">
+    <div>
+        <h1 style="margin: 0 0 0.25rem 0; font-size: 1.75rem; color: var(--secondary);">Patient Dashboard</h1>
+        <p class="text-muted" style="margin: 0;">Here's an overview of your clinical data.</p>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 3fr; gap: 1.5rem; margin-bottom: 2rem;">
+    <!-- Patient Profile Summary -->
+    <div class="card animate-fade-in delay-100" style="padding: 1.5rem;">
+        <div style="text-align: center; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); margin-bottom: 1.5rem;">
+            <div style="width: 80px; height: 80px; background: var(--primary-light); color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: 700; margin: 0 auto 1rem auto;">
+                {{ user.username.0|upper }}
+            </div>
+            <h2 style="margin: 0 0 0.25rem 0; font-size: 1.25rem;">{{ user.username }}</h2>
+            <div class="badge badge-info">Standard Patient Profile</div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div>
+                <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Total Scans</div>
+                <div style="font-weight: 600; font-size: 1.125rem;">{{ total_reports }}</div>
+            </div>
+            <div>
+                <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Active Alerts</div>
+                <div style="font-weight: 600; font-size: 1.125rem; color: var(--danger);">{{ alerts_found }}</div>
+            </div>
+            <div>
+                <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">DOB</div>
+                <div style="font-weight: 500; font-size: 0.875rem;">Not set</div>
+            </div>
+            <div>
+                <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Blood Type</div>
+                <div style="font-weight: 500; font-size: 0.875rem;">Not set</div>
+            </div>
+        </div>
+        
+        <button class="btn btn-outline" style="width: 100%; margin-top: 1.5rem; font-size: 0.875rem;">Edit Profile Data</button>
+    </div>
+    
+    <!-- Upload Area & Trends Placeholder -->
+    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+        <div class="card animate-fade-in delay-200" style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h3 style="margin: 0; font-size: 1.125rem;">New Clinical Analysis</h3>
+            </div>
+            
+            <form action="{% url 'upload_report' %}" method="post" enctype="multipart/form-data" 
+                  style="border: 2px dashed var(--border); border-radius: var(--radius-md); background: rgba(0,0,0,0.01); padding: 2rem; text-align: center; cursor: pointer; transition: all 0.2s;"
+                  onmouseover="this.style.borderColor='var(--primary)'; this.style.backgroundColor='var(--primary-light)';" 
+                  onmouseout="this.style.borderColor='var(--border)'; this.style.backgroundColor='rgba(0,0,0,0.01)';"
+                  onclick="document.getElementById('file-upload').click()">
+                {% csrf_token %}
+                <div style="font-size: 2.5rem; color: var(--primary); margin-bottom: 1rem;">
+                    <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                </div>
+                <h4 style="margin: 0 0 0.5rem 0; font-size: 1.125rem;">Upload Document</h4>
+                <p style="color: var(--text-muted); margin: 0 0 1.5rem 0; font-size: 0.875rem;">Drag and drop a PDF lab result or click to browse</p>
+                <input type="file" name="file" id="file-upload" accept=".pdf,.jpg,.jpeg,.png" style="display: none;" onchange="this.form.submit()">
+                <button type="button" class="btn" style="padding: 0.5rem 1.5rem; border-radius: 999px;">Select File</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Data Table Section -->
+<div class="card animate-fade-in delay-300" style="padding: 0; overflow: hidden;">
+    <div style="padding: 1.5rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+        <h3 style="margin: 0; font-size: 1.125rem;">Clinical Records History</h3>
+        <div style="display: flex; gap: 0.5rem;">
+            <button class="btn btn-outline" style="padding: 0.25rem 0.75rem; font-size: 0.75rem;">Filter</button>
+            <button class="btn btn-outline" style="padding: 0.25rem 0.75rem; font-size: 0.75rem;">Export CSV</button>
+        </div>
+    </div>
+    
+    <div style="overflow-x: auto;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Record ID</th>
+                    <th>Date Uploaded</th>
+                    <th>File Type</th>
+                    <th>AI Status</th>
+                    <th>Alerts</th>
+                    <th style="text-align: right;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for report in reports %}
+                <tr>
+                    <td style="font-weight: 500;">#{{ report.id }}</td>
+                    <td style="color: var(--text-muted);">{{ report.uploaded_at|date:"M d, Y - H:i" }}</td>
+                    <td>
+                        <span style="display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.875rem;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                            PDF Document
+                        </span>
+                    </td>
+                    <td>
+                        {% if report.status == 'completed' %}
+                            <span class="badge badge-success">Analyzed</span>
+                        {% elif report.status == 'failed' %}
+                            <span class="badge badge-danger">Failed</span>
+                        {% else %}
+                            <span class="badge badge-info">Processing...</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if report.status == 'completed' and report.analysis %}
+                            {% if report.analysis.abnormalities|length > 0 %}
+                                <span style="color: var(--danger); font-weight: 600;">{{ report.analysis.abnormalities|length }} detected</span>
+                            {% else %}
+                                <span style="color: var(--success); font-weight: 500;">0 detected</span>
+                            {% endif %}
+                        {% else %}
+                            <span style="color: var(--text-muted);">-</span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align: right;">
+                        <a href="{% url 'report_detail' report.pk %}" class="btn" style="padding: 0.25rem 1rem; font-size: 0.75rem; border-radius: 999px;">View Report</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 4rem 1rem; color: var(--text-muted);">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 1rem auto; opacity: 0.5;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                        <p style="margin: 0;">No clinical records found in the system.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

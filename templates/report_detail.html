@@ -1,0 +1,423 @@
+{% extends 'base.html' %}
+
+{% block breadcrumb %}
+<span style="color: var(--text-secondary);">Clinical AI</span> 
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin: 0 8px; opacity: 0.5;"><polyline points="9 18 15 12 9 6"></polyline></svg>
+<span style="color: var(--text-primary);">Analysis #{{ report.id }}</span>
+{% endblock %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --bg-light: #f8fafc;
+        --surface-light: rgba(255, 255, 255, 0.7);
+        --surface-border: rgba(0, 0, 0, 0.06);
+        --text-primary: #0f172a;
+        --text-secondary: #64748b;
+        
+        --glow-normal: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(5, 150, 105, 0.02));
+        --glow-abnormal: linear-gradient(135deg, rgba(239, 68, 68, 0.08), rgba(220, 38, 38, 0.02));
+        
+        --text-abnormal: #dc2626;
+        --text-normal: #059669;
+        
+        --accent-cyan: #0284c7;
+        --accent-purple: #7e22ce;
+    }
+
+    body {
+        background-color: var(--bg-light);
+        background-image: 
+            radial-gradient(circle at 15% 50%, rgba(2, 132, 199, 0.04), transparent 25%),
+            radial-gradient(circle at 85% 30%, rgba(126, 34, 206, 0.04), transparent 25%);
+        color: var(--text-primary);
+        font-family: 'Outfit', sans-serif;
+    }
+
+    /* Override base styles for light mode */
+    .sidebar { background: #ffffff; border-right: 1px solid var(--surface-border); }
+    .header { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); border-bottom: 1px solid var(--surface-border); color: var(--text-primary);}
+    .nav-link { color: var(--text-secondary); }
+    .nav-link:hover { background: rgba(0,0,0,0.03); color: var(--text-primary); }
+    .nav-link.active { background: rgba(2, 132, 199, 0.08); color: var(--accent-cyan); }
+    h1, h2, h3, h4, p, span { font-family: 'Outfit', sans-serif; }
+
+    /* Glassmorphism Card */
+    .glass-panel {
+        background: var(--surface-light);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid var(--surface-border);
+        border-radius: 24px;
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+    }
+
+    .glass-panel:hover {
+        border-color: rgba(0, 0, 0, 0.1);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.06);
+    }
+
+    /* Hero Section */
+    .hero-panel {
+        padding: 3rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .hero-panel::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; height: 4px;
+        background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
+    }
+
+    .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 16px;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        background: #ffffff;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+    }
+    
+    .status-pill.success { color: #059669; border-color: rgba(16, 185, 129, 0.2); background: rgba(16, 185, 129, 0.05); }
+    .status-pill.error { color: #dc2626; border-color: rgba(239, 68, 68, 0.2); background: rgba(239, 68, 68, 0.05); }
+    .status-pill.processing { color: #0284c7; border-color: rgba(56, 189, 248, 0.2); background: rgba(56, 189, 248, 0.05); }
+
+    .hero-title {
+        font-size: 3rem;
+        font-weight: 800;
+        line-height: 1.1;
+        margin: 1.5rem 0;
+        color: var(--text-primary);
+        letter-spacing: -0.03em;
+    }
+
+    /* Patient Meta Grid */
+    .meta-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-top: 3rem;
+        padding-top: 2rem;
+        border-top: 1px solid var(--surface-border);
+    }
+
+    .meta-item { display: flex; flex-direction: column; gap: 4px; }
+    .meta-label { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
+    .meta-value { font-size: 1.125rem; font-weight: 600; color: var(--text-primary); }
+
+    /* Findings Grid */
+    .section-heading {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 3rem 0 1.5rem 0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        letter-spacing: -0.02em;
+    }
+    
+    .section-heading svg { stroke: var(--accent-cyan); }
+
+    .findings-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 1.5rem;
+    }
+
+    /* Finding Card */
+    .finding-card {
+        padding: 1.5rem;
+        border-radius: 20px;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .finding-card.abnormal {
+        background: #ffffff;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        box-shadow: 0 4px 20px rgba(239, 68, 68, 0.05);
+    }
+    .finding-card.abnormal:hover { box-shadow: 0 8px 30px rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.5); }
+
+    .finding-card.normal {
+        background: #ffffff;
+        border: 1px solid rgba(16, 185, 129, 0.15);
+    }
+
+    .fc-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
+    .fc-param { font-size: 1.125rem; font-weight: 700; color: var(--text-primary); margin: 0; }
+    .fc-ref { font-size: 0.75rem; color: var(--text-secondary); font-weight: 500; }
+    
+    .fc-value-box { text-align: right; }
+    .fc-value { font-size: 1.75rem; font-weight: 800; line-height: 1; }
+    
+    .abnormal .fc-value { color: var(--text-abnormal); }
+    .normal .fc-value { color: var(--text-normal); }
+
+    .fc-badge {
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        font-weight: 800;
+        letter-spacing: 1px;
+        padding: 4px 8px;
+        border-radius: 6px;
+        margin-top: 6px;
+        display: inline-block;
+    }
+    
+    .abnormal .fc-badge { background: rgba(239, 68, 68, 0.1); color: #b91c1c; }
+
+    .fc-explanation {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(0,0,0,0.06);
+        font-size: 0.9375rem;
+        color: var(--text-secondary);
+        line-height: 1.5;
+    }
+    .abnormal .fc-explanation { color: #991b1b; }
+
+    /* Recommendations */
+    .rec-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 1rem; }
+    
+    .rec-item {
+        display: flex;
+        gap: 1rem;
+        padding: 1.5rem;
+        background: #ffffff;
+        border-radius: 16px;
+        border: 1px solid var(--surface-border);
+        box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+        transition: transform 0.2s ease, box-shadow 0.2s;
+    }
+    
+    .rec-item:hover {
+        transform: translateX(8px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+        border-color: rgba(0,0,0,0.1);
+    }
+    
+    .rec-icon {
+        width: 40px; height: 40px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+        color: #fff;
+    }
+
+    .rec-content { font-size: 1rem; line-height: 1.6; color: var(--text-primary); font-weight: 500; }
+
+    /* Utilities */
+    .btn-glow {
+        background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+        color: #fff;
+        border: none;
+        padding: 10px 24px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-family: 'Outfit';
+        cursor: pointer;
+        transition: all 0.3s;
+        box-shadow: 0 4px 15px rgba(34, 211, 238, 0.3);
+    }
+    
+    .btn-glow:hover {
+        box-shadow: 0 8px 25px rgba(192, 132, 252, 0.5);
+        transform: translateY(-2px);
+    }
+
+    /* Animations */
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-up { animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards; opacity: 0; }
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.2s; }
+    .delay-3 { animation-delay: 0.3s; }
+</style>
+
+<div class="flex justify-between items-center mb-6 animate-up">
+    <a href="{% url 'dashboard' %}" style="display: inline-flex; align-items: center; gap: 8px; color: var(--text-secondary); text-decoration: none; font-weight: 500; transition: color 0.2s;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        Dashboard
+    </a>
+    <button class="btn-glow" onclick="window.print()">
+        Export Report
+    </button>
+</div>
+
+<!-- Hero Section -->
+<div class="glass-panel hero-panel animate-up delay-1">
+    <div style="display: flex; gap: 12px; margin-bottom: 1rem;">
+        {% if report.status == 'completed' %}
+            <div class="status-pill success">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                Analysis Complete
+            </div>
+        {% elif report.status == 'failed' %}
+            <div class="status-pill error">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                Analysis Failed
+            </div>
+        {% else %}
+            <div class="status-pill processing">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                Processing AI
+            </div>
+        {% endif %}
+    </div>
+
+    <h1 class="hero-title">Intelligent Health Analysis</h1>
+    
+    <p style="font-size: 1.25rem; color: var(--text-secondary); max-width: 800px; line-height: 1.6; margin: 0;">
+        {% if analysis %}
+            {{ analysis.summary }}
+        {% elif report.status == 'failed' %}
+            The AI engine could not extract text from this document. Ensure it is a clear PDF with readable text, and try uploading again.
+        {% else %}
+            Your document is currently in the processing queue. Please check back in a moment.
+        {% endif %}
+    </p>
+
+    <div class="meta-grid">
+        <div class="meta-item">
+            <span class="meta-label">Patient Name</span>
+            <span class="meta-value">{{ user.username }}</span>
+        </div>
+        <div class="meta-item">
+            <span class="meta-label">Record ID</span>
+            <span class="meta-value">DOC-{{ report.id }}</span>
+        </div>
+        <div class="meta-item">
+            <span class="meta-label">Generated On</span>
+            <span class="meta-value">{{ report.uploaded_at|date:"M d, Y" }}</span>
+        </div>
+        <div class="meta-item">
+            <span class="meta-label">Source File</span>
+            <span class="meta-value">
+                {% if report.file %}
+                    <a href="{{ report.file.url }}" target="_blank" style="color: var(--accent-cyan); text-decoration: none;">
+                        {{ report.file.name|slice:"8:" }}
+                    </a>
+                {% else %}
+                    N/A
+                {% endif %}
+            </span>
+        </div>
+    </div>
+</div>
+
+{% if analysis %}
+
+<!-- Findings Sections -->
+<h2 class="section-heading animate-up delay-2">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+    Clinical Biomarkers
+</h2>
+
+<div class="findings-grid animate-up delay-2">
+    <!-- Priorities / Abnormal -->
+    {% if analysis.all_findings %}
+        {% for item in analysis.all_findings %}
+            {% if item.status == 'Abnormal' %}
+                <div class="glass-panel finding-card abnormal">
+                    <div class="fc-header">
+                        <div>
+                            <h3 class="fc-param">{{ item.parameter }}</h3>
+                            <span class="fc-ref">Ref: {{ item.reference_range }}</span>
+                        </div>
+                        <div class="fc-value-box">
+                            <div class="fc-value">{{ item.value }}</div>
+                            <div class="fc-badge">{{ item.severity|default:"Attention" }}</div>
+                        </div>
+                    </div>
+                    <div class="fc-explanation">
+                        {{ item.explanation }}
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
+
+        <!-- Normal Findings -->
+        {% for item in analysis.all_findings %}
+            {% if item.status == 'Normal' %}
+                <div class="glass-panel finding-card normal">
+                    <div class="fc-header">
+                        <div>
+                            <h3 class="fc-param">{{ item.parameter }}</h3>
+                            <span class="fc-ref">Ref: {{ item.reference_range }}</span>
+                        </div>
+                        <div class="fc-value-box">
+                            <div class="fc-value">{{ item.value }}</div>
+                        </div>
+                    </div>
+                    <div class="fc-explanation">
+                        {{ item.explanation|default:"Within normal limits." }}
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+</div>
+
+<!-- Recommendations -->
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; margin-top: 3rem;" class="animate-up delay-3">
+    <div>
+        <h2 class="section-heading" style="margin-top: 0;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            Action Plan
+        </h2>
+        <div class="glass-panel" style="padding: 2rem;">
+            <ul class="rec-list">
+                {% for rec in analysis.recommendations %}
+                    <li class="rec-item">
+                        <div class="rec-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        </div>
+                        <div class="rec-content">{{ rec }}</div>
+                    </li>
+                {% empty %}
+                    <li class="rec-item" style="opacity: 0.6;">
+                        <div class="rec-icon" style="background: var(--surface-border);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg></div>
+                        <div class="rec-content">No specific actions required. Maintain your current wellness routine.</div>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    
+    <div>
+        <h2 class="section-heading" style="margin-top: 0;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></svg>
+            Raw Transcript
+        </h2>
+        <div class="glass-panel" style="padding: 1.5rem; height: calc(100% - 70px);">
+            <div style="font-family: 'Courier New', monospace; font-size: 0.75rem; color: var(--text-secondary); white-space: pre-wrap; max-height: 400px; overflow-y: auto;">
+{{ raw_text|default:"No raw text available for this report." }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="glass-panel animate-up delay-3" style="margin-top: 3rem; padding: 1.5rem; display: flex; gap: 1rem; align-items: center; border-color: rgba(245, 158, 11, 0.2); background: rgba(245, 158, 11, 0.05);">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+    <p style="font-size: 0.875rem; color: #fbbf24; margin: 0; line-height: 1.5;">
+        <strong>AI Interpretation Notice:</strong> This analysis is computationally generated. It does not replace professional medical advice, diagnosis, or treatment. Always consult a qualified healthcare provider.
+    </p>
+</div>
+
+{% endif %}
+{% endblock %}

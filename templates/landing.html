@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediReport AI | Intelligent Medical Analysis</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Light Mode Palette */
+            --bg-main: #ffffff;
+            --bg-alt: #f8fafc; /* Slate 50 */
+            --bg-accent: #eff6ff; /* Blue 50 */
+            --primary: #0284c7; /* Sky 600 */
+            --primary-hover: #0369a1;
+            --primary-glow: rgba(2, 132, 199, 0.15);
+            --accent: #4f46e5; /* Indigo 600 */
+            --text-main: #0f172a; /* Slate 900 */
+            --text-muted: #64748b; /* Slate 500 */
+            --surface-glass: rgba(255, 255, 255, 0.85);
+            --border-color: #e2e8f0; /* Slate 200 */
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
+            --shadow-lg: 0 20px 25px -5px rgba(0,0,0,0.1);
+            
+            /* Semantic Colors */
+            --success: #10b981;
+            --success-bg: #d1fae5;
+            --warning: #f59e0b;
+            --warning-bg: #fef3c7;
+            --danger: #ef4444;
+            --danger-bg: #fee2e2;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        h1, h2, h3, h4, .brand {
+            font-family: 'Outfit', sans-serif;
+            color: var(--text-main);
+        }
+
+        /* --- Background Effects --- */
+        .bg-glow {
+            position: absolute;
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, var(--primary-glow) 0%, rgba(255,255,255,0) 70%);
+            border-radius: 50%;
+            filter: blur(60px);
+            z-index: -1;
+            opacity: 0.8;
+            animation: pulse 10s infinite alternate;
+        }
+        .glow-1 { top: -200px; left: -200px; }
+        .glow-2 { top: 40%; right: -300px; background: radial-gradient(circle, rgba(79, 70, 229, 0.1) 0%, rgba(255,255,255,0) 70%); }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.5; }
+            100% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        /* --- Navigation --- */
+        .navbar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 1rem 0;
+            background: var(--surface-glass);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            z-index: 100;
+            transition: all 0.3s ease;
+        }
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .brand {
+            font-size: 1.5rem;
+            font-weight: 800;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+        .brand span { color: var(--primary); }
+        
+        .nav-links {
+            display: flex;
+            gap: 2.5rem;
+            align-items: center;
+        }
+        .nav-link {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+            font-size: 0.95rem;
+        }
+        .nav-link:hover { color: var(--primary); }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1.5rem;
+            border-radius: 999px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            font-family: 'Outfit', sans-serif;
+            cursor: pointer;
+            gap: 0.5rem;
+        }
+        .btn-primary {
+            background: var(--primary);
+            color: white !important;
+            box-shadow: 0 4px 15px var(--primary-glow);
+            border: none;
+        }
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(2, 132, 199, 0.3);
+        }
+        .btn-outline {
+            background: transparent;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+        }
+        .btn-outline:hover {
+            background: var(--bg-alt);
+            border-color: var(--text-muted);
+        }
+
+        /* --- Sections Shared --- */
+        section {
+            padding: 8rem 2rem;
+            position: relative;
+        }
+        .section-alt {
+            background-color: var(--bg-alt);
+            border-top: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .section-header h2 {
+            font-size: 2.5rem;
+            margin: 0 0 1rem 0;
+            letter-spacing: -0.02em;
+        }
+        .section-header p {
+            color: var(--text-muted);
+            font-size: 1.125rem;
+            margin: 0;
+        }
+
+        /* --- Hero Section --- */
+        .hero {
+            padding-top: 10rem;
+            padding-bottom: 6rem;
+            text-align: center;
+        }
+        .badge-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--bg-accent);
+            border: 1px solid rgba(2, 132, 199, 0.2);
+            color: var(--primary);
+            padding: 0.375rem 1rem;
+            border-radius: 999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+        }
+        .hero h1 {
+            font-size: clamp(3rem, 6vw, 4.5rem);
+            line-height: 1.1;
+            margin: 0 0 1.5rem 0;
+            letter-spacing: -0.03em;
+        }
+        .hero p {
+            font-size: clamp(1.125rem, 2vw, 1.25rem);
+            color: var(--text-muted);
+            max-width: 650px;
+            margin: 0 auto 3rem auto;
+            line-height: 1.7;
+        }
+
+        /* Hero UI Mockup */
+        .mockup-container {
+            margin-top: 4rem;
+            border-radius: 1rem;
+            background: white;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+            text-align: left;
+        }
+        .mockup-header {
+            background: var(--bg-alt);
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            gap: 0.5rem;
+        }
+        .mockup-dot { width: 12px; height: 12px; border-radius: 50%; }
+        
+        /* --- Grid Layouts --- */
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; }
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 4rem; align-items: center;}
+
+        /* --- Cards --- */
+        .card {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 1rem;
+            padding: 2.5rem;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-sm);
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-md);
+            border-color: rgba(2, 132, 199, 0.3);
+        }
+        .icon-box {
+            width: 56px;
+            height: 56px;
+            background: var(--bg-accent);
+            color: var(--primary);
+            border-radius: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        /* --- Testimonials --- */
+        .testimonial {
+            background: var(--bg-alt);
+            padding: 2rem;
+            border-radius: 1rem;
+            position: relative;
+        }
+        .testimonial::before {
+            content: '"';
+            position: absolute;
+            top: 1rem;
+            right: 1.5rem;
+            font-size: 4rem;
+            color: var(--border-color);
+            font-family: serif;
+            line-height: 1;
+        }
+
+        /* --- Footer --- */
+        footer {
+            padding: 4rem 2rem 2rem 2rem;
+            background: var(--text-main);
+            color: white;
+        }
+        
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            section { padding: 4rem 1.5rem; }
+            .grid-2 { gap: 2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-glow glow-1"></div>
+    <div class="bg-glow glow-2"></div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="#" class="brand">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary);"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                Medi<span>Report</span>
+            </a>
+            <div class="nav-links">
+                <a href="#features" class="nav-link">Features</a>
+                <a href="#documents" class="nav-link">Supported Tests</a>
+                <a href="#security" class="nav-link">Security</a>
+            </div>
+            <div style="display: flex; gap: 1rem;">
+                <a href="{% url 'login' %}" class="btn btn-outline" style="padding: 0.5rem 1.25rem;">Log In</a>
+                <a href="{% url 'register' %}" class="btn btn-primary" style="padding: 0.5rem 1.25rem;">Try for Free</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="badge-pill">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="13 2 13 9 20 9"></polyline><path d="M13 2H6a2 2 0 0 0-2 2v16c0 1.1.9 2 2 2h12a2 2 0 0 0 2-2V9l-7-7z"></path></svg>
+                New PDF Parsing Engine Live
+            </div>
+            <h1>Make sense of your<br><span style="color: var(--primary);">medical reports</span>.</h1>
+            <p>Don't wait for your next doctor's appointment to understand your lab results. Our AI translates complex clinical data into simple, actionable insights instantly.</p>
+            
+            <div style="display: flex; gap: 1rem; justify-content: center;">
+                <a href="{% url 'register' %}" class="btn btn-primary">
+                    Upload Your First Report
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                </a>
+            </div>
+            
+            <div class="mockup-container">
+                <div class="mockup-header">
+                    <div class="mockup-dot" style="background: #ef4444;"></div>
+                    <div class="mockup-dot" style="background: #f59e0b;"></div>
+                    <div class="mockup-dot" style="background: #10b981;"></div>
+                </div>
+                <div style="padding: 2rem;">
+                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem;">
+                        <div style="padding: 0.5rem 1rem; background: var(--danger-bg); color: var(--danger); border-radius: 999px; font-weight: 600; font-size: 0.875rem;">High Alert</div>
+                        <h3 style="margin: 0; font-size: 1.25rem;">LDL Cholesterol</h3>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: end; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);">
+                        <div>
+                            <p style="margin: 0; color: var(--text-muted); font-size: 0.875rem;">Your Value</p>
+                            <p style="margin: 0; font-size: 2rem; font-weight: 700; color: var(--danger);">165 <span style="font-size: 1rem; color: var(--text-muted); font-weight: 400;">mg/dL</span></p>
+                        </div>
+                        <div style="text-align: right;">
+                            <p style="margin: 0; color: var(--text-muted); font-size: 0.875rem;">Standard Range</p>
+                            <p style="margin: 0; font-weight: 500;">&lt; 100 mg/dL</p>
+                        </div>
+                    </div>
+                    <p style="margin: 0; color: var(--text-main); line-height: 1.6;">Your LDL ("bad") cholesterol is elevated above the optimal range. This increases the risk of plaque buildup in your arteries. We recommend discussing dietary changes or statin therapy with your physician.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Trust Section -->
+    <section class="section-alt" style="padding: 3rem 2rem;">
+        <div class="container" style="text-align: center;">
+            <p style="font-size: 0.875rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2rem;">Built on enterprise-grade infrastructure</p>
+            <div style="display: flex; justify-content: center; gap: 4rem; flex-wrap: wrap; opacity: 0.6; filter: grayscale(100%);">
+                <div style="font-size: 1.5rem; font-weight: 700; color: var(--text-main);">Google Gemini</div>
+                <div style="font-size: 1.5rem; font-weight: 700; color: var(--text-main);">HIPAA Ready</div>
+                <div style="font-size: 1.5rem; font-weight: 700; color: var(--text-main);">AES-256 Encryption</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features">
+        <div class="container">
+            <div class="section-header">
+                <h2>Clinical clarity, instantly.</h2>
+                <p>We bridge the gap between complex clinical documentation and patient understanding, empowering you to take control of your health.</p>
+            </div>
+            
+            <div class="grid-3">
+                <div class="card">
+                    <div class="icon-box">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    </div>
+                    <h3>Smart Parsing</h3>
+                    <p style="color: var(--text-muted); margin: 0;">Upload any standard PDF lab result. Our engine automatically extracts structured metrics seamlessly.</p>
+                </div>
+                
+                <div class="card">
+                    <div class="icon-box" style="background: var(--warning-bg); color: var(--warning);">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                    </div>
+                    <h3>Anomaly Detection</h3>
+                    <p style="color: var(--text-muted); margin: 0;">We instantly flag out-of-range metrics and categorize them by severity so you know exactly what needs attention.</p>
+                </div>
+                
+                <div class="card">
+                    <div class="icon-box" style="background: var(--success-bg); color: var(--success);">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                    </div>
+                    <h3>Actionable Insights</h3>
+                    <p style="color: var(--text-muted); margin: 0;">Get plain-English explanations of complex terms and a tailored list of questions to ask your doctor.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Supported Documents Section -->
+    <section id="documents" class="section-alt">
+        <div class="container">
+            <div class="grid-2">
+                <div>
+                    <h2 style="font-size: 2.5rem; margin: 0 0 1rem 0;">We analyze the tests that matter most.</h2>
+                    <p style="color: var(--text-muted); font-size: 1.125rem; margin-bottom: 2rem;">Our AI model is trained to recognize standard clinical reporting formats from thousands of labs nationwide.</p>
+                    <ul style="list-style: none; padding: 0; display: grid; gap: 1rem;">
+                        <li style="display: flex; align-items: center; gap: 1rem; font-weight: 500;">
+                            <div style="color: var(--primary);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                            Complete Blood Count (CBC)
+                        </li>
+                        <li style="display: flex; align-items: center; gap: 1rem; font-weight: 500;">
+                            <div style="color: var(--primary);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                            Comprehensive Metabolic Panel (CMP)
+                        </li>
+                        <li style="display: flex; align-items: center; gap: 1rem; font-weight: 500;">
+                            <div style="color: var(--primary);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                            Lipid Panels & Thyroid Tests
+                        </li>
+                        <li style="display: flex; align-items: center; gap: 1rem; font-weight: 500;">
+                            <div style="color: var(--primary);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                            Urinalysis & Pathology Reports
+                        </li>
+                    </ul>
+                </div>
+                <div style="background: white; padding: 2rem; border-radius: 1rem; box-shadow: var(--shadow-md); border: 1px solid var(--border-color);">
+                    <div style="display: flex; align-items: center; justify-content: center; height: 300px; background: var(--bg-alt); border-radius: 0.5rem; border: 2px dashed var(--border-color);">
+                        <div style="text-align: center;">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: var(--primary); margin-bottom: 1rem;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+                            <h4 style="margin: 0 0 0.5rem 0;">Upload your PDF</h4>
+                            <p style="margin: 0; color: var(--text-muted); font-size: 0.875rem;">We support files up to 10MB.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Security Section -->
+    <section id="security">
+        <div class="container text-center" style="text-align: center;">
+            <div style="display: inline-flex; align-items: center; justify-content: center; width: 80px; height: 80px; background: var(--primary-glow); color: var(--primary); border-radius: 50%; margin-bottom: 2rem;">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            </div>
+            <h2 style="font-size: 2.5rem; margin: 0 0 1.5rem 0;">Your privacy is our priority.</h2>
+            <p style="font-size: 1.125rem; color: var(--text-muted); max-width: 600px; margin: 0 auto 3rem auto;">Medical data is sensitive. We employ state-of-the-art encryption at rest and in transit. Your uploaded documents are processed securely and are never used to train public AI models.</p>
+            
+            <a href="{% url 'register' %}" class="btn btn-primary">Create Secure Account</a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 2rem; padding-bottom: 2rem; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 2rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary);"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                    <span style="font-family: 'Outfit'; font-weight: 700; font-size: 1.25rem;">MediReport AI</span>
+                </div>
+                <div style="display: flex; gap: 2rem;">
+                    <a href="#" style="color: #94a3b8; text-decoration: none;">Privacy Policy</a>
+                    <a href="#" style="color: #94a3b8; text-decoration: none;">Terms of Service</a>
+                    <a href="#" style="color: #94a3b8; text-decoration: none;">Contact Us</a>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; color: #64748b; font-size: 0.875rem;">
+                <p style="margin: 0;">&copy; 2026 MediReport AI. All rights reserved.</p>
+                <p style="margin: 0;">Disclaimer: Not intended as a substitute for professional medical advice.</p>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>
