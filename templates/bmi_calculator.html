@@ -1,0 +1,450 @@
+{% extends 'base.html' %}
+
+{% block title %}Advanced BMI Analytics | MediReport AI{% endblock %}
+{% block breadcrumb %}BMI Calculator{% endblock %}
+
+{% block content %}
+<!-- Tailwind CSS via CDN (preflight disabled to prevent breaking base.html) -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    corePlugins: {
+      preflight: false,
+    },
+    theme: {
+      extend: {
+        colors: {
+          brand: '#0284c7',
+          brandLight: '#e0f2fe',
+        },
+        animation: {
+          'fade-in-up': 'fadeInUp 0.6s ease-out forwards',
+          'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+          'float': 'float 3s ease-in-out infinite',
+        },
+        keyframes: {
+          fadeInUp: {
+            '0%': { opacity: '0', transform: 'translateY(20px)' },
+            '100%': { opacity: '1', transform: 'translateY(0)' },
+          },
+          float: {
+            '0%, 100%': { transform: 'translateY(0)' },
+            '50%': { transform: 'translateY(-10px)' },
+          }
+        }
+      }
+    }
+  }
+</script>
+
+<style>
+    /* Custom CSS Overrides & Interactivity */
+    .glass-card {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04);
+    }
+    
+    .gradient-text {
+        background: linear-gradient(135deg, #0284c7, #4f46e5);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .marker-triangle {
+        position: absolute;
+        top: -24px;
+        transform: translateX(-50%);
+        transition: left 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        opacity: 0;
+    }
+    .marker-triangle.visible {
+        opacity: 1;
+    }
+
+    input[type=range] {
+        -webkit-appearance: none;
+        width: 100%;
+        background: transparent;
+    }
+    input[type=range]:focus {
+        outline: none;
+    }
+    input[type=range]::-webkit-slider-runnable-track {
+        width: 100%;
+        height: 10px;
+        cursor: pointer;
+        background: #e0f2fe;
+        border-radius: 999px;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+    }
+    input[type=range]::-webkit-slider-thumb {
+        height: 28px;
+        width: 28px;
+        border-radius: 50%;
+        background: #0284c7;
+        cursor: pointer;
+        -webkit-appearance: none;
+        margin-top: -9px;
+        box-shadow: 0 4px 10px rgba(2, 132, 199, 0.4);
+        transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    input[type=range]::-webkit-slider-thumb:hover {
+        transform: scale(1.2);
+    }
+    
+    .tab-btn {
+        transition: all 0.3s ease;
+    }
+    .tab-btn.active {
+        color: #0284c7;
+        border-bottom-color: #0284c7;
+    }
+</style>
+
+<div class="max-w-6xl mx-auto pb-12 font-sans">
+    
+    <!-- Header Section -->
+    <div class="text-center mb-10 opacity-0 animate-fade-in-up" style="animation-delay: 0.1s;">
+        <h1 class="text-4xl md:text-5xl font-extrabold text-slate-800 mb-3 tracking-tight">Advanced <span class="gradient-text">Body Mass Analytics</span></h1>
+        <p class="text-slate-500 text-lg md:text-xl max-w-2xl mx-auto">Comprehensive clinical assessment of your body composition, integrating advanced metrics beyond standard BMI.</p>
+    </div>
+    
+    <!-- Main Calculator Card -->
+    <div class="glass-card rounded-3xl overflow-hidden mb-12 opacity-0 animate-fade-in-up" style="animation-delay: 0.2s;">
+        
+        <!-- Tabs Header -->
+        <div class="flex border-b border-slate-200/60 bg-white/40">
+            <button onclick="switchBmiMode('auto')" id="tab-auto" class="tab-btn active flex-1 py-4 text-lg font-bold text-slate-500 border-b-4 border-transparent hover:text-brand transition-colors">My Clinical Profile</button>
+            <button onclick="switchBmiMode('custom')" id="tab-custom" class="tab-btn flex-1 py-4 text-lg font-bold text-slate-500 border-b-4 border-transparent hover:text-brand transition-colors">Interactive Simulator</button>
+        </div>
+        
+        <div class="p-8 md:p-12">
+            
+            <!-- Auto Mode -->
+            <div id="mode-auto" class="block">
+                {% if user.profile.height and user.profile.weight %}
+                    <div class="text-center">
+                        <div class="flex justify-center items-baseline gap-4">
+                            <div id="bmi-display" class="font-black text-7xl md:text-8xl gradient-text leading-none tracking-tighter">--</div>
+                        </div>
+                        <div id="bmi-category" class="text-2xl md:text-3xl font-extrabold mt-3 tracking-tight"></div>
+                        
+                        <!-- Visual Scale -->
+                        <div class="max-w-3xl mx-auto my-12 relative">
+                            <div class="flex h-4 rounded-full overflow-hidden shadow-inner bg-slate-100">
+                                <div class="h-full w-[24%] bg-amber-400" title="Underweight (< 18.5)"></div>
+                                <div class="h-full w-[25%] bg-emerald-500" title="Healthy (18.5 - 24.9)"></div>
+                                <div class="h-full w-[25%] bg-amber-500" title="Overweight (25.0 - 29.9)"></div>
+                                <div class="h-full w-[26%] bg-rose-500" title="Obese (≥ 30)"></div>
+                            </div>
+                            <div class="relative w-full mt-2">
+                                <div id="auto-marker" class="marker-triangle">
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 22h20L12 2z"/></svg>
+                                </div>
+                            </div>
+                            <div class="flex justify-between text-slate-400 text-xs font-bold mt-4 px-[10%]">
+                                <span>15</span>
+                                <span>18.5</span>
+                                <span>25</span>
+                                <span>30</span>
+                                <span>40</span>
+                            </div>
+                        </div>
+                        
+                        <div id="bmi-suggestion" class="text-lg text-slate-700 leading-relaxed max-w-2xl mx-auto mb-10 font-medium"></div>
+                        
+                        <!-- Advanced Metrics Grid -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+                            <div class="bg-white/60 border border-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
+                                <div class="text-xs uppercase font-bold text-slate-500 mb-2">Healthy Weight Range</div>
+                                <div id="auto-healthy-range" class="text-2xl font-black text-slate-800">--</div>
+                                <div class="text-sm text-emerald-600 font-medium mt-1">Target zone</div>
+                            </div>
+                            <div class="bg-white/60 border border-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
+                                <div class="text-xs uppercase font-bold text-slate-500 mb-2">Ideal Body Weight</div>
+                                <div id="auto-ibw" class="text-2xl font-black text-slate-800">--</div>
+                                <div class="text-sm text-brand font-medium mt-1">Devine Formula</div>
+                            </div>
+                            <div class="bg-white/60 border border-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
+                                <div class="text-xs uppercase font-bold text-slate-500 mb-2">Ponderal Index</div>
+                                <div id="auto-ponderal" class="text-2xl font-black text-slate-800">--</div>
+                                <div class="text-sm text-slate-500 font-medium mt-1">Corpulence Index</div>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="text-center py-16">
+                        <div class="w-24 h-24 rounded-full bg-gradient-to-br from-brandLight to-indigo-100 text-brand flex items-center justify-center mx-auto mb-6 shadow-inner animate-float">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                        </div>
+                        <h3 class="text-2xl font-extrabold text-slate-800 mb-3">Profile Data Missing</h3>
+                        <p class="text-slate-500 text-lg mb-8 max-w-md mx-auto">Please add your height and weight to your profile to view your personalized clinical BMI analysis.</p>
+                        <a href="{% url 'profile_edit' %}" class="inline-block bg-gradient-to-r from-brand to-indigo-600 text-white font-bold text-lg py-3 px-8 rounded-full shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all">Update Profile Data</a>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Custom Mode (Interactive Simulator) -->
+            <div id="mode-custom" class="hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-5xl mx-auto mb-10 items-center">
+                    
+                    <!-- Sliders Column -->
+                    <div class="space-y-10">
+                        <div class="bg-white/50 p-6 rounded-2xl border border-white shadow-sm">
+                            <div class="flex justify-between items-center mb-4">
+                                <label class="text-sm font-extrabold text-slate-500 uppercase tracking-widest">Height</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="number" id="custom-height-input" class="w-24 bg-white border border-slate-200 rounded-xl py-2 px-3 text-xl font-bold text-slate-800 text-center focus:outline-none focus:border-brand focus:ring-2 focus:ring-brandLight transition-all" value="175" min="100" max="250" oninput="syncSliders('height')">
+                                    <span class="font-bold text-slate-500">cm</span>
+                                </div>
+                            </div>
+                            <input type="range" id="custom-height-slider" min="100" max="250" value="175" oninput="syncInputs('height')">
+                        </div>
+                        
+                        <div class="bg-white/50 p-6 rounded-2xl border border-white shadow-sm">
+                            <div class="flex justify-between items-center mb-4">
+                                <label class="text-sm font-extrabold text-slate-500 uppercase tracking-widest">Weight</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="number" id="custom-weight-input" class="w-24 bg-white border border-slate-200 rounded-xl py-2 px-3 text-xl font-bold text-slate-800 text-center focus:outline-none focus:border-brand focus:ring-2 focus:ring-brandLight transition-all" value="70" min="30" max="250" oninput="syncSliders('weight')">
+                                    <span class="font-bold text-slate-500">kg</span>
+                                </div>
+                            </div>
+                            <input type="range" id="custom-weight-slider" min="30" max="250" value="70" oninput="syncInputs('weight')">
+                        </div>
+                    </div>
+                    
+                    <!-- Result Column -->
+                    <div class="text-center flex flex-col justify-center">
+                        <div class="text-sm text-slate-400 uppercase font-extrabold tracking-widest mb-4">Live Analysis Result</div>
+                        <div id="custom-bmi-display" class="font-black text-8xl md:text-9xl gradient-text leading-none tracking-tighter animate-pulse-slow">--</div>
+                        <div id="custom-bmi-category" class="text-3xl font-extrabold mt-4"></div>
+                    </div>
+                    
+                </div>
+                
+                <!-- Visual Scale -->
+                <div class="max-w-4xl mx-auto my-10 relative">
+                    <div class="flex h-5 rounded-full overflow-hidden shadow-inner bg-slate-100">
+                        <div class="h-full w-[24%] bg-amber-400 transition-all"></div>
+                        <div class="h-full w-[25%] bg-emerald-500 transition-all"></div>
+                        <div class="h-full w-[25%] bg-amber-500 transition-all"></div>
+                        <div class="h-full w-[26%] bg-rose-500 transition-all"></div>
+                    </div>
+                    <div class="relative w-full mt-3">
+                        <div id="custom-marker" class="marker-triangle">
+                            <svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 22h20L12 2z"/></svg>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="custom-bmi-suggestion" class="text-xl text-slate-700 text-center leading-relaxed max-w-3xl mx-auto mb-12 font-medium"></div>
+                
+                <!-- Advanced Metrics Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto border-t border-slate-200/50 pt-10">
+                    <div class="bg-white/60 border border-white rounded-2xl p-6 shadow-sm">
+                        <div class="text-xs uppercase font-bold text-slate-500 mb-2">Healthy Weight Range</div>
+                        <div id="custom-healthy-range" class="text-2xl font-black text-slate-800">--</div>
+                        <div class="text-sm text-emerald-600 font-medium mt-1">Target zone</div>
+                    </div>
+                    <div class="bg-white/60 border border-white rounded-2xl p-6 shadow-sm">
+                        <div class="text-xs uppercase font-bold text-slate-500 mb-2">Ideal Body Weight</div>
+                        <div id="custom-ibw" class="text-2xl font-black text-slate-800">--</div>
+                        <div class="text-sm text-brand font-medium mt-1">Devine Formula</div>
+                    </div>
+                    <div class="bg-white/60 border border-white rounded-2xl p-6 shadow-sm">
+                        <div class="text-xs uppercase font-bold text-slate-500 mb-2">Ponderal Index</div>
+                        <div id="custom-ponderal" class="text-2xl font-black text-slate-800">--</div>
+                        <div class="text-sm text-slate-500 font-medium mt-1">Corpulence Index</div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+    
+    <!-- Educational Content Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 opacity-0 animate-fade-in-up" style="animation-delay: 0.4s;">
+        
+        <div class="glass-card rounded-3xl p-8">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800">Limitations of BMI</h3>
+            </div>
+            <p class="text-slate-600 mb-4">While BMI is a useful screening tool, it does not directly measure body fat and has several clinical limitations:</p>
+            <ul class="space-y-3">
+                <li class="flex gap-3 text-slate-600">
+                    <svg class="flex-shrink-0 w-5 h-5 text-amber-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    <span><strong>Muscle Mass:</strong> Highly muscular individuals (like athletes) may have a high BMI but low body fat percentage.</span>
+                </li>
+                <li class="flex gap-3 text-slate-600">
+                    <svg class="flex-shrink-0 w-5 h-5 text-amber-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    <span><strong>Age & Bone Density:</strong> Older adults tend to have more body fat than younger adults with the exact same BMI.</span>
+                </li>
+                <li class="flex gap-3 text-slate-600">
+                    <svg class="flex-shrink-0 w-5 h-5 text-amber-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    <span><strong>Fat Distribution:</strong> It cannot distinguish between visceral fat (dangerous belly fat) and subcutaneous fat.</span>
+                </li>
+            </ul>
+        </div>
+        
+        <div class="glass-card rounded-3xl p-8">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800">Healthy Habits</h3>
+            </div>
+            <p class="text-slate-600 mb-4">Regardless of your current BMI category, focusing on sustainable, healthy habits is the best approach to clinical wellness:</p>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-white/60 p-4 rounded-xl border border-white">
+                    <h4 class="font-bold text-slate-800 mb-1">Nutrition</h4>
+                    <p class="text-sm text-slate-500">Focus on whole foods, lean proteins, and stay hydrated.</p>
+                </div>
+                <div class="bg-white/60 p-4 rounded-xl border border-white">
+                    <h4 class="font-bold text-slate-800 mb-1">Movement</h4>
+                    <p class="text-sm text-slate-500">Aim for 150 minutes of moderate aerobic activity weekly.</p>
+                </div>
+                <div class="bg-white/60 p-4 rounded-xl border border-white">
+                    <h4 class="font-bold text-slate-800 mb-1">Sleep</h4>
+                    <p class="text-sm text-slate-500">7-9 hours of quality sleep aids metabolic regulation.</p>
+                </div>
+                <div class="bg-white/60 p-4 rounded-xl border border-white">
+                    <h4 class="font-bold text-slate-800 mb-1">Stress</h4>
+                    <p class="text-sm text-slate-500">Chronic stress elevates cortisol, leading to weight gain.</p>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+</div>
+
+<script>
+    function updateMarker(bmi, markerId, color) {
+        const marker = document.getElementById(markerId);
+        if (!marker) return;
+        
+        marker.style.color = color;
+        
+        let percent = 0;
+        if (bmi < 15) percent = 0;
+        else if (bmi > 40) percent = 100;
+        else {
+            percent = ((bmi - 15) / (40 - 15)) * 100;
+        }
+        
+        marker.style.left = percent + '%';
+        marker.classList.add('visible');
+    }
+
+    function switchBmiMode(mode) {
+        const autoBtn = document.getElementById('tab-auto');
+        const customBtn = document.getElementById('tab-custom');
+        const autoContent = document.getElementById('mode-auto');
+        const customContent = document.getElementById('mode-custom');
+        
+        if (mode === 'auto') {
+            autoBtn.classList.add('active');
+            customBtn.classList.remove('active');
+            autoContent.style.display = 'block';
+            customContent.style.display = 'none';
+        } else {
+            customBtn.classList.add('active');
+            autoBtn.classList.remove('active');
+            customContent.style.display = 'block';
+            autoContent.style.display = 'none';
+            calculateCustomBmi();
+        }
+    }
+    
+    function getBmiData(bmi) {
+        if (bmi < 18.5) return { cat: 'Underweight', col: '#d97706', sug: 'You are currently underweight. Consider a nutrient-rich diet to reach a healthier weight. Consult a clinical nutritionist for guidance.' };
+        if (bmi < 25) return { cat: 'Healthy Weight', col: '#059669', sug: 'Great job! Your BMI is in the healthy range. Maintain your current lifestyle with balanced meals and regular exercise.' };
+        if (bmi < 30) return { cat: 'Overweight', col: '#d97706', sug: 'You are in the overweight range. Incorporate more aerobic exercise and focus on portion control. Small lifestyle changes help significantly!' };
+        return { cat: 'Obesity', col: '#dc2626', sug: 'Your BMI indicates obesity. It is highly recommended to consult a healthcare provider for a personalized health plan and cardiovascular screening.' };
+    }
+    
+    function calculateAdvancedMetrics(hCm, wKg, prefix) {
+        const heightM = hCm / 100;
+        
+        const minWeight = (18.5 * heightM * heightM).toFixed(1);
+        const maxWeight = (24.9 * heightM * heightM).toFixed(1);
+        document.getElementById(prefix + '-healthy-range').textContent = `${minWeight} - ${maxWeight} kg`;
+        
+        const idealWeight = (22 * heightM * heightM).toFixed(1);
+        document.getElementById(prefix + '-ibw').textContent = `~ ${idealWeight} kg`;
+        
+        const ponderal = (wKg / Math.pow(heightM, 3)).toFixed(1);
+        document.getElementById(prefix + '-ponderal').textContent = `${ponderal} kg/m³`;
+    }
+
+    function syncSliders(type) {
+        const input = document.getElementById('custom-' + type + '-input');
+        const slider = document.getElementById('custom-' + type + '-slider');
+        slider.value = input.value;
+        calculateCustomBmi();
+    }
+    
+    function syncInputs(type) {
+        const slider = document.getElementById('custom-' + type + '-slider');
+        const input = document.getElementById('custom-' + type + '-input');
+        input.value = slider.value;
+        calculateCustomBmi();
+    }
+    
+    function calculateCustomBmi() {
+        const h = parseFloat(document.getElementById('custom-height-input').value);
+        const w = parseFloat(document.getElementById('custom-weight-input').value);
+        
+        if (h > 0 && w > 0) {
+            const heightM = h / 100;
+            const bmi = (w / (heightM * heightM)).toFixed(1);
+            const data = getBmiData(bmi);
+            
+            document.getElementById('custom-bmi-display').textContent = bmi;
+            const catEl = document.getElementById('custom-bmi-category');
+            catEl.textContent = data.cat;
+            catEl.style.color = data.col;
+            document.getElementById('custom-bmi-suggestion').textContent = data.sug;
+            
+            calculateAdvancedMetrics(h, w, 'custom');
+            
+            updateMarker(parseFloat(bmi), 'custom-marker', data.col);
+        }
+    }
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        const heightCm = parseFloat("{{ user.profile.height|default:'0' }}");
+        const weightKg = parseFloat("{{ user.profile.weight|default:'0' }}");
+        
+        if (heightCm > 0 && weightKg > 0) {
+            const heightM = heightCm / 100;
+            const bmi = (weightKg / (heightM * heightM)).toFixed(1);
+            const data = getBmiData(bmi);
+            
+            const bmiDisplay = document.getElementById('bmi-display');
+            if (bmiDisplay) {
+                bmiDisplay.textContent = bmi;
+                const catEl = document.getElementById('bmi-category');
+                catEl.textContent = data.cat;
+                catEl.style.color = data.col;
+                document.getElementById('bmi-suggestion').textContent = data.sug;
+                
+                calculateAdvancedMetrics(heightCm, weightKg, 'auto');
+                
+                setTimeout(() => {
+                    updateMarker(parseFloat(bmi), 'auto-marker', data.col);
+                }, 300);
+            }
+        }
+    });
+</script>
+{% endblock %}

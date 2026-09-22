@@ -1,7 +1,16 @@
-.env
-.env.*
-!.env.example
+# Virtual environment
 venv/
+.venv/
+
+# Environment variables
+.env
+
+# Python cache
 __pycache__/
 *.pyc
+
+# Django local database
+db.sqlite3
+
+# Uploaded files
 media/

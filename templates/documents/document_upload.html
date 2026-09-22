@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}Upload Document | MediReport AI{% endblock %}
+{% block breadcrumb %}My Documents / Upload{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 2rem auto; padding: 2.5rem; border-radius: var(--radius-xl); box-shadow: var(--shadow-md);">
+    <h2 style="margin-top: 0; font-size: 1.75rem; color: var(--secondary);">Upload Medical Document</h2>
+    <p style="color: var(--text-muted); margin-bottom: 2.5rem; font-size: 1.05rem;">Store your lab results, prescriptions, and medical certificates securely.</p>
+    
+    <form action="{% url 'document_upload' %}" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="title">Document Title</label>
+            <input type="text" name="title" id="title" placeholder="e.g. Annual Blood Test 2026" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="category">Category</label>
+            <select name="category" id="category" required>
+                {% for code, name in categories %}
+                    <option value="{{ code }}">{{ name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="file">File (PDF, Image, etc.)</label>
+            <input type="file" name="file" id="file" required style="padding: 0.5rem; background: var(--bg-color);">
+        </div>
+        
+        <div class="form-group">
+            <label for="notes">Additional Notes (Optional)</label>
+            <textarea name="notes" id="notes" rows="3" placeholder="Any context or notes for this document..."></textarea>
+        </div>
+        
+        <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+            <a href="{% url 'document_list' %}" class="btn btn-outline" style="flex: 1;">Cancel</a>
+            <button type="submit" class="btn" style="flex: 2; padding: 0.875rem; font-size: 1.125rem;">Save Document</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block title %}Clinical History | MediReport AI{% endblock %}
+{% block breadcrumb %}Clinical History{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6 animate-fade-in">
+    <div>
+        <h1 style="margin: 0 0 0.25rem 0; font-size: 1.75rem; color: var(--secondary);">Clinical History</h1>
+        <p class="text-muted" style="margin: 0;">View all your past medical reports and AI analyses.</p>
+    </div>
+    <a href="{% url 'upload_report' %}" class="btn">+ New Analysis</a>
+</div>
+
+<div class="card mb-4 animate-fade-in delay-100">
+    <form method="get" class="flex items-center gap-4">
+        <div style="font-weight: 500;">Filter by Status:</div>
+        <select name="status" onchange="this.form.submit()" style="padding: 0.5rem; border-radius: var(--radius-md); border: 1px solid var(--border);">
+            <option value="">All Statuses</option>
+            <option value="completed" {% if current_status == 'completed' %}selected{% endif %}>Analyzed</option>
+            <option value="pending" {% if current_status == 'pending' %}selected{% endif %}>Processing</option>
+            <option value="failed" {% if current_status == 'failed' %}selected{% endif %}>Failed</option>
+        </select>
+    </form>
+</div>
+
+<!-- Data Table Section -->
+<div class="card animate-fade-in delay-200" style="padding: 0; overflow: hidden;">
+    <div style="overflow-x: auto;">
+        <table class="data-table">
+            <thead style="background: var(--bg-color);">
+                <tr>
+                    <th>Record ID</th>
+                    <th>Date Uploaded</th>
+                    <th>Source File</th>
+                    <th>AI Status</th>
+                    <th>Alerts Detected</th>
+                    <th style="text-align: right;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for report in reports %}
+                <tr style="transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='rgba(0,0,0,0.02)';" onmouseout="this.style.backgroundColor='transparent';">
+                    <td style="font-weight: 600; color: var(--primary);">#DOC-{{ report.id }}</td>
+                    <td style="color: var(--text-main);">{{ report.uploaded_at|date:"M d, Y - h:i A" }}</td>
+                    <td>
+                        <span style="display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--text-muted);">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                            {% if report.file %}
+                                {{ report.file.name|slice:"8:"|truncatechars:20 }}
+                            {% else %}
+                                Unknown
+                            {% endif %}
+                        </span>
+                    </td>
+                    <td>
+                        {% if report.status == 'completed' %}
+                            <span class="badge badge-success">Analyzed</span>
+                        {% elif report.status == 'failed' %}
+                            <span class="badge badge-danger">Failed</span>
+                        {% else %}
+                            <span class="badge badge-info">Processing...</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if report.status == 'completed' and report.analysis %}
+                            {% if report.analysis.abnormalities|length > 0 %}
+                                <span style="display: inline-flex; align-items: center; gap: 4px; color: var(--danger); font-weight: 600; background: rgba(239, 68, 68, 0.1); padding: 2px 8px; border-radius: 999px; font-size: 0.8rem;">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                                    {{ report.analysis.abnormalities|length }} detected
+                                </span>
+                            {% else %}
+                                <span style="display: inline-flex; align-items: center; gap: 4px; color: var(--success); font-weight: 500; background: rgba(16, 185, 129, 0.1); padding: 2px 8px; border-radius: 999px; font-size: 0.8rem;">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                    All clear
+                                </span>
+                            {% endif %}
+                        {% else %}
+                            <span style="color: var(--text-muted); font-size: 0.875rem;">-</span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align: right;">
+                        <a href="{% url 'report_detail' report.pk %}" class="btn btn-outline" style="padding: 0.35rem 1rem; font-size: 0.75rem; border-radius: 999px;">View Report</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 4rem 1rem; color: var(--text-muted);">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 1rem auto; opacity: 0.5;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                        <p style="margin: 0; font-size: 1.1rem;">No clinical records found.</p>
+                        <a href="{% url 'upload_report' %}" class="btn mt-4">Upload your first report</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

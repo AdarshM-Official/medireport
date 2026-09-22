@@ -254,9 +254,9 @@
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
         Dashboard
     </a>
-    <button class="btn-glow" onclick="window.print()">
-        Export Report
-    </button>
+    <a href="{% url 'export_report_pdf' report.pk %}" class="btn-glow" style="text-decoration: none; display: inline-block;">
+        Export Report (PDF)
+    </a>
 </div>
 
 <!-- Hero Section -->

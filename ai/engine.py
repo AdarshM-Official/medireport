@@ -8,6 +8,14 @@ except ImportError:
 from .prompts import SYSTEM_PROMPT
 
 def analyze_medical_text(text):
+    if not text or len(text.strip()) < 10:
+        return {
+            "summary": "The uploaded file does not contain any readable text. Please ensure you upload a clear image or PDF of a lab result.",
+            "insights": [],
+            "all_findings": [],
+            "recommendations": []
+        }
+
     api_key = os.environ.get("OPENROUTER_API_KEY")
     if not api_key:
         # Fallback for demonstration if API key is missing
