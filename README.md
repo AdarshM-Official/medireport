@@ -2,6 +2,15 @@
 
 MediReport AI is a powerful, Django-based clinical intelligence application designed to analyze medical reports, track longitudinal patient health trends, and provide advanced body composition analytics.
 
+<p align="left">
+  <img src="https://img.shields.io/badge/django-%23092E20.svg?style=for-the-badge&logo=django&logoColor=white" alt="Django" />
+  <img src="https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54" alt="Python" />
+  <img src="https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="TailwindCSS" />
+  <img src="https://img.shields.io/badge/javascript-%23323330.svg?style=for-the-badge&logo=javascript&logoColor=%23F7DF1E" alt="JavaScript" />
+  <img src="https://img.shields.io/badge/sqlite-%2307405e.svg?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite" />
+  <img src="https://img.shields.io/badge/Google%20Gemini-4285F4?style=for-the-badge&logo=google&logoColor=white" alt="Google Gemini" />
+</p>
+
 ## System Architecture & Technical Implementation
 
 The application is built on a monolithic Django architecture, utilizing a hybrid frontend approach that combines traditional Django templates with modern utility-first CSS and Vanilla JS for high interactivity.
